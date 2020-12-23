@@ -6,8 +6,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
+        with:
+         repository: https://github.com/vonProteus/xamarin-android-docker
+         path: xamarin-android-docker
+      - name: Update Base Image
+        run: |
+          docker build -t vonproteus/xamarin-android-docker xamarin-android-docker
+      - uses: actions/checkout@v2
+        with:
+         repository: https://github.com/ChristopherHX/Xamarin-Droid-Builder
+         path: xamarin-android-docker-action
       - name: Building APK
-        uses: ChristopherHX/Xamarin-Droid-Builder@master
+        uses: ./xamarin-android-docker-action
         with:
           args: /r:True /t:SignAndroidPackage /p:AndroidSdkDirectory=/android/sdk PKHeX.Android/PKHeX.Android.csproj
       - name: Artifacts
