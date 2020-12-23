@@ -1,0 +1,21 @@
+on: push
+name: Build and Generate Android Apk
+jobs:
+  build:
+    name: Build APK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Building APK
+        uses: fahimshahrierrasel/Xamarin-Droid-Builder@1.0.2
+        with:
+          args: /r:True /t:SignAndroidPackage /p:AndroidSdkDirectory=/android/sdk PKHeX.Android/PKHeX.Android.csproj
+      - name: Artifacts
+        run: |
+          mkdir -p apks
+          cp PKHeX.Android/PKHeX.Android.csproj/bin/Debug/*.apk apks
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v1
+        with:
+          name: apks
+          path: apks
