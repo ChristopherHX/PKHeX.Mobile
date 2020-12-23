@@ -7,7 +7,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Building APK
-        uses: fahimshahrierrasel/Xamarin-Droid-Builder@1.0.2/action
+        uses: ChristopherHX/Xamarin-Droid-Builder@master
         with:
           args: /r:True /t:SignAndroidPackage /p:AndroidSdkDirectory=/android/sdk PKHeX.Android/PKHeX.Android.csproj
       - name: Artifacts
