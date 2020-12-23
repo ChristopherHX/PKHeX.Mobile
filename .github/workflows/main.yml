@@ -1,0 +1,34 @@
+name: CI
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Dependencies
+        run: |
+          # Install Mono
+          sudo apt install gnupg ca-certificates
+          sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF
+          echo "deb https://download.mono-project.com/repo/ubuntu stable-focal main" | sudo tee /etc/apt/sources.list.d/mono-official-stable.list
+          sudo apt update
+          DEBIAN_FRONTEND=noninteractive sudo apt install -y mono-devel msbuild
+          # Install Xamarin
+          curl -L https://artprodcus3.artifacts.visualstudio.com/Ad0adf05a-e7d7-4b65-96fe-3f3884d42038/6fd3d886-57a5-4e31-8db7-52a1b47c07a8/_apis/artifact/cGlwZWxpbmVhcnRpZmFjdDovL3hhbWFyaW4vcHJvamVjdElkLzZmZDNkODg2LTU3YTUtNGUzMS04ZGI3LTUyYTFiNDdjMDdhOC9idWlsZElkLzMyNzkwL2FydGlmYWN0TmFtZS9JbnN0YWxsZXJzKy0rTGludXg1/content?format=zip --output xamarin.zip
+          unzip xamarin.zip
+          DEBIAN_FRONTEND=noninteractive sudo apt install -y "./Installers - Linux/xamarin.android-oss_11.1.99.0_amd64.deb"
+          # Install Android Sdk (already installed on Github Actions)
+          curl -L https://dl.google.com/android/repository/commandlinetools-linux-6858069_latest.zip --output commandlinetools.zip
+          unzip commandlinetools.zip
+          mkdir sdkroot
+          yes | cmdline-tools/bin/sdkmanager --licenses --sdk_root=$PWD/sdkroot
+          cmdline-tools/bin/sdkmanager 'build-tools;28.0.3' platform-tools 'platforms;android-28' --sdk_root=$PWD/sdkroot
+      - name: Build Apk
+        run: |
+          # Build and restore Apk
+          msbuild /r:True /p:Configuration=Release /p:AndroidSdkDirectory=$PWD/sdkroot/ /t:SignAndroidPackage PKHeX.Android
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v1
+        with:
+          name: apks
+          path: PKHeX.Android/bin/Release/*.apk
