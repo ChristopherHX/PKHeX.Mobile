@@ -1,4 +1,4 @@
-name: CI
+name: Android OSS
 on: push
 jobs:
   build:
@@ -7,13 +7,15 @@ jobs:
       - uses: actions/checkout@v2
       - name: Install Xamarin
         shell: pwsh
+        env:
+          DEBIAN_FRONTEND: noninteractive
         run: |
           # definitions=48 is the id from https://dev.azure.com/xamarin/public/_apis/build/definitions?api-version=6.0 with name Xamarin.Android-OSS
           $latestbuild = (Invoke-WebRequest 'https://dev.azure.com/xamarin/public/_apis/build/builds?api-version=6.0&branchName=refs/heads/master&definitions=48&$top=1&resultFilter=succeeded').Content | ConvertFrom-Json
           $artifacts = (Invoke-WebRequest ($latestbuild.value.url + "/artifacts")).Content | ConvertFrom-Json
           curl -L (($artifacts.value | where {$_.name -eq "Installers - Linux" }).resource.downloadUrl) --output xamarin.zip
           unzip xamarin.zip
-          DEBIAN_FRONTEND=noninteractive sudo apt install -y "./Installers - Linux/xamarin.android-oss_*_amd64.deb"
+          sudo apt install -y "./Installers - Linux/xamarin.android-oss_*_amd64.deb"
       - name: Install Android Sdk (already installed somewhere on Github Actions)
         run: |
           curl -L https://dl.google.com/android/repository/commandlinetools-linux-6858069_latest.zip --output commandlinetools.zip
