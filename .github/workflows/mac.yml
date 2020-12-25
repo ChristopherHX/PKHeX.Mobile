@@ -1,0 +1,35 @@
+name: Android and iOS OSS
+on: push
+jobs:
+  buildIos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Xamarin
+        shell: pwsh
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          curl -L https://download.mono-project.com/archive/6.12.0/macos-10-universal/MonoFramework-MDK-6.12.0.107.macos10.xamarin.universal.pkg --output mono.pkg
+          sudo installer -pkg ./mono.pkg -target /
+          # definitions=48 is the id from https://dev.azure.com/xamarin/public/_apis/build/definitions?api-version=6.0 with name Xamarin.Android-OSS
+          $latestbuild = (Invoke-WebRequest 'https://dev.azure.com/xamarin/public/_apis/build/builds?api-version=6.0&branchName=refs/heads/master&definitions=48&$top=1&resultFilter=succeeded').Content | ConvertFrom-Json
+          $artifacts = (Invoke-WebRequest ($latestbuild.value.url + "/artifacts")).Content | ConvertFrom-Json
+          curl -L (($artifacts.value | where {$_.name -eq "Installers - macOS and Windows" }).resource.downloadUrl) --output xamarin.zip
+          unzip xamarin.zip
+          sudo installer -pkg ((Resolve-Path "./Installers - macOS and Windows/xamarin.android-oss_*_amd64.deb").Path) -target /
+      - name: Install Android Sdk (already installed somewhere on Github Actions)
+        run: |
+          curl -L https://dl.google.com/android/repository/commandlinetools-mac-6858069_latest.zip --output commandlinetools.zip
+          unzip commandlinetools.zip
+          mkdir sdkroot
+          yes | cmdline-tools/bin/sdkmanager --licenses --sdk_root=$PWD/sdkroot
+          cmdline-tools/bin/sdkmanager 'build-tools;28.0.3' platform-tools 'platforms;android-28' --sdk_root=$PWD/sdkroot
+      - name: Build Apk
+        run: |
+          # Build and restore Apk
+          msbuild /r:True /p:Configuration=Release /p:AndroidSdkDirectory=$PWD/sdkroot/ /t:SignAndroidPackage PKHeX.Android
+      - name: Build iOS
+        run: |
+          # Build and restore iOS
+          msbuild /r:True /p:Configuration=Release /t:SignAndroidPackage PKHeX.iOS
