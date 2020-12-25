@@ -17,7 +17,12 @@ jobs:
           $artifacts = (Invoke-WebRequest ($latestbuild.value.url + "/artifacts")).Content | ConvertFrom-Json
           curl -L (($artifacts.value | where {$_.name -eq "Installers - macOS and Windows" }).resource.downloadUrl) --output xamarin.zip
           unzip xamarin.zip
-          sudo installer -pkg ((Resolve-Path "./Installers - macOS and Windows/xamarin.android-oss_*_amd64.deb").Path) -target /
+          sudo installer -pkg ((Resolve-Path "./Installers - macOS and Windows/Xamarin.Android.Sdk-OSS-*.pkg").Path) -target /
+          # links to Xamarin mac and iOS from https://github.com/xamarin/xamarin-macios
+          curl -L https://download.visualstudio.microsoft.com/download/pr/7b60a920-c8b1-4798-b660-ae1a7294eb6d/bbdc2a9c6705520fd0a6d04f71e5ed3e/xamarin.ios-14.2.0.12.pkg --output xamarin.pkg
+          sudo installer -pkg ./xamarin.pkg -target /
+          curl -L https://download.visualstudio.microsoft.com/download/pr/b089be2f-932a-40ab-904b-b626f9e6427b/6aad9f3ea4fbfb92ce267e0f60b34797/xamarin.mac-6.20.2.2.pkg --output xamarin-mac.pkg
+          sudo installer -pkg ./xamarin-mac.pkg -target /
       - name: Install Android Sdk (already installed somewhere on Github Actions)
         run: |
           curl -L https://dl.google.com/android/repository/commandlinetools-mac-6858069_latest.zip --output commandlinetools.zip
