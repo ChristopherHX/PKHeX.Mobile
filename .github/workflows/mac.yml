@@ -18,4 +18,4 @@ jobs:
       - name: Build iOS
         run: |
           # Build and restore iOS
-          msbuild /r:True /p:Configuration=Release /t:SignAndroidPackage PKHeX.iOS
+          msbuild /r:True /p:Configuration=Release PKHeX.iOS
