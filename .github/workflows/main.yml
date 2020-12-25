@@ -5,19 +5,17 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
-      - name: Install Dependencies
+      - name: Install Xamarin
+        shell: pwsh
         run: |
-          # Install Mono
-          sudo apt install gnupg ca-certificates
-          sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF
-          echo "deb https://download.mono-project.com/repo/ubuntu stable-focal main" | sudo tee /etc/apt/sources.list.d/mono-official-stable.list
-          sudo apt update
-          DEBIAN_FRONTEND=noninteractive sudo apt install -y mono-devel msbuild
-          # Install Xamarin
-          curl -L https://artprodcus3.artifacts.visualstudio.com/Ad0adf05a-e7d7-4b65-96fe-3f3884d42038/6fd3d886-57a5-4e31-8db7-52a1b47c07a8/_apis/artifact/cGlwZWxpbmVhcnRpZmFjdDovL3hhbWFyaW4vcHJvamVjdElkLzZmZDNkODg2LTU3YTUtNGUzMS04ZGI3LTUyYTFiNDdjMDdhOC9idWlsZElkLzMyNzkwL2FydGlmYWN0TmFtZS9JbnN0YWxsZXJzKy0rTGludXg1/content?format=zip --output xamarin.zip
+          # definitions=48 is the id from https://dev.azure.com/xamarin/public/_apis/build/definitions?api-version=6.0 with name Xamarin.Android-OSS
+          $latestbuild = (Invoke-WebRequest 'https://dev.azure.com/xamarin/public/_apis/build/builds?api-version=6.0&branchName=refs/heads/master&definitions=48&$top=1&resultFilter=succeeded').Content | ConvertFrom-Json
+          $artifacts = (Invoke-WebRequest ($latestbuild.value.url + "/artifacts")).Content | ConvertFrom-Json
+          curl -L (($artifacts.value | where {$_.name -eq "Installers - Linux" }).resource.downloadUrl) --output xamarin.zip
           unzip xamarin.zip
-          DEBIAN_FRONTEND=noninteractive sudo apt install -y "./Installers - Linux/xamarin.android-oss_11.1.99.0_amd64.deb"
-          # Install Android Sdk (already installed on Github Actions)
+          DEBIAN_FRONTEND=noninteractive sudo apt install -y "./Installers - Linux/xamarin.android-oss_*_amd64.deb"
+      - name: Install Android Sdk (already installed somewhere on Github Actions)
+        run: |
           curl -L https://dl.google.com/android/repository/commandlinetools-linux-6858069_latest.zip --output commandlinetools.zip
           unzip commandlinetools.zip
           mkdir sdkroot
