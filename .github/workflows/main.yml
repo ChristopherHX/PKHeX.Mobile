@@ -15,7 +15,7 @@ jobs:
           $artifacts = (Invoke-WebRequest ($latestbuild.value.url + "/artifacts")).Content | ConvertFrom-Json
           curl -L (($artifacts.value | where {$_.name -eq "Installers - Linux" }).resource.downloadUrl) --output xamarin.zip
           unzip xamarin.zip
-          sudo apt install -y "./Installers - Linux/xamarin.android-oss_*_amd64.deb"
+          sudo apt install -y ((Resolve-Path "./Installers - Linux/xamarin.android-oss_*_amd64.deb").Path)
       - name: Install Android Sdk (already installed somewhere on Github Actions)
         run: |
           curl -L https://dl.google.com/android/repository/commandlinetools-linux-6858069_latest.zip --output commandlinetools.zip
